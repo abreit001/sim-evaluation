@@ -10,6 +10,8 @@ sim_eval.py:
 
 Use this to evaluate one-goal treks. This script will parse in data from the csv files created by dataFetcherCombined.sh. This file contains functions for plotting the data and evaluating the failures as well.
 
-sim_eval.py:
+sim_eval_out_and_back.py:
 
 Use this to evaluate two-goal (out and back) treks. This script will parse in data from the csv files created by dataFetcherCombined.sh. This file contains functions for plotting the data and evaluating the failures as well.
+
+NOTE: sim_eval.py and sim_eval_out_and_back.py must be run with Python 2 rather than Python 3 due to a ROS-related package.
