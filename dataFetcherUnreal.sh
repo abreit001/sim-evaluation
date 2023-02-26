@@ -32,6 +32,7 @@ do
   # rosbag play -r 1000 ${path}/trial_${counter}_*.bag
 
   # Record which trial this is in all files
+  echo "Trial ${counter}"
   echo "Trial ${counter}" >>${goalFile}
   echo "Trial ${counter}" >>${poseFile}
 
@@ -44,7 +45,11 @@ do
   
   # Record the goal reached topic (this records nothing if the goal was unreached)
   echo 'Goals Reached' >>${goalFile}
-  rostopic echo -p -b ${path}/trial_${counter}_*.bag $goalReachedTopic >>${goalFile}
+  if grep -q 'PLANNER: Goal .* reached' ${path}/trial_${counter}_*.txt
+  then
+    rostopic echo -p -b ${path}/trial_${counter}_*.bag $goalTopic >>${goalFile}
+  fi
+  # rostopic echo -p -b ${path}/trial_${counter}_*.bag $goalReachedTopic >>${goalFile}
 
   # Increment test counter
   ((counter++))

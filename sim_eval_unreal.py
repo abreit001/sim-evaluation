@@ -19,8 +19,10 @@ poses = {}
 arcs_curr = {}
 arcs_eval = {}
 # Initialize tipping points and pausing points
-tips = []
-pauses = []
+success_tips = []
+success_pauses = []
+failure_tips = []
+failure_pauses = []
 
 # Organize pose data by appending all pose data coordinates into a path
 # represented as a list. Upon completing the path, add it into a dictionary
@@ -308,6 +310,9 @@ def plotData(param):
                 ax.scatter(goalX, goalY, c=colors[n%num_colors], zorder=1)
     
     if param == 'successes':
+        # colors = list(mcolors.TABLEAU_COLORS)
+        # num_colors = len(colors)
+        # counter = 0
         for n in successIndices:
             # Separate the x and y positions into lists and plot the path
             time, pos, quat, euler = zip(*poses[n])
@@ -315,11 +320,22 @@ def plotData(param):
             poseX = pos[:,0] - origin_x
             poseY = pos[:,1] - origin_y
             ax.plot(poseX, poseY, 'mediumseagreen')
+            # ax.plot(poseX, poseY, colors[counter%num_colors])
 
             # Find the x and y position of the goal and plot it
             goalX = np.array(goals_sent[n])[:,0] - origin_x
             goalY = np.array(goals_sent[n])[:,1] - origin_y
             ax.scatter(goalX, goalY, c='g', zorder=1)
+            # ax.scatter(goalX, goalY, c=colors[counter%num_colors], zorder=1)
+            counter += 1
+
+        for i in range(len(success_tips)):
+            ax.scatter(success_tips[i][2][0], success_tips[i][2][1], c="red", marker="^")
+    
+        for i in range(len(success_pauses)):
+            ax.scatter(success_pauses[i][2][0], success_pauses[i][2][1], c="red", marker="o")
+        
+        # ax.legend(successIndices, title='Trial Number')
     
     if param == 'failures':
         colors = list(mcolors.TABLEAU_COLORS)
@@ -340,11 +356,11 @@ def plotData(param):
 
             counter += 1
         
-        for i in range(len(tips)):
-            ax.scatter(tips[i][2][0], tips[i][2][1], c="red", marker="^")
+        for i in range(len(failure_tips)):
+            ax.scatter(failure_tips[i][2][0], failure_tips[i][2][1], c="red", marker="^")
         
-        for i in range(len(pauses)):
-            ax.scatter(pauses[i][2][0], pauses[i][2][1], c="red", marker="o")
+        for i in range(len(failure_pauses)):
+            ax.scatter(failure_pauses[i][2][0], failure_pauses[i][2][1], c="red", marker="o")
 
         ax.legend(failureIndices, title='Trial Number')
 
@@ -366,7 +382,7 @@ def plotData(param):
     ax.grid(which='major', color='grey', linewidth=1, linestyle='-', alpha=0.2)
     ax.grid(which='minor', color='grey', linewidth=1, linestyle='-', alpha=0.2)
 
-    plot.show()
+    # plot.show()
 
 def failureEval():
     for index in failureIndices:
@@ -392,7 +408,7 @@ def failureEval():
                 tipped = True
                 tipped_time.append(time[i] - time[0])
             elif len(tipped_time) > 0:
-                tips.append([tipped_time[0], tipped_time[-1], pos[i]])
+                failure_tips.append([tipped_time[0], tipped_time[-1], pos[i]])
                 print('Tipped at ' + str(pos[i]) + ' from ' + str(tipped_time[0]/1e9) + ' seconds to ' + str(tipped_time[-1]/1e9) + ' seconds')
                 tipped_time = []
         
@@ -432,7 +448,7 @@ def failureEval():
                 pause_count += 1
             else:
                 if pause_count > 5:
-                    pauses.append([time[i]-pause_start, pause_start, pos[i]])
+                    failure_pauses.append([time[i]-pause_start, pause_start, pos[i]])
                     duration = str((time[i]-pause_start)/1e9)
                     start_time = str(pause_start/1e9 - time[0]/1e9)
                     end_time = str(time[i]/1e9 - time[0]/1e9)
@@ -443,7 +459,69 @@ def failureEval():
                 pause_count = 0
 
         if pause_count > 5:
-            pauses.append([time[i]-pause_start, pause_start, pos[i]])
+            failure_pauses.append([time[i]-pause_start, pause_start, pos[i]])
+            duration = str((time[i]-pause_start)/1e9)
+            start_time = str(pause_start/1e9 - time[0]/1e9)
+            end_time = str(time[i]/1e9 - time[0]/1e9)
+            location = str(pos[i])
+            print('Paused at ' + location + ' for ' + duration +
+                    ' seconds, starting at ' + start_time +
+                    ' seconds and ending at ' + end_time + ' seconds')
+            moving_at_end = False
+
+        print('Total length of trial: ' + str((time[-1]-time[0])/1e9) + ' seconds')
+        print('Still moving at completion of the trial? ' + str(moving_at_end))
+
+def successEval():
+    for index in successIndices:
+        print('\nTRIAL ' + str(index))
+
+        poseData = poses[index]
+
+        # Store data in appropriate arrays
+        time, pos, quat, euler = zip(*poseData)
+        time = np.asarray(time, dtype=int)
+        pos = np.asarray(pos, dtype=float)
+        quat = np.asarray(quat, dtype=float)
+        euler = np.asarray(euler, dtype=float)
+
+        # Find if the rover's roll and pitch exceed a certain value
+        euler_deg = euler * 180/np.pi
+        tipped = False
+        tipped_time = []
+        for i in range(len(euler_deg)):
+            if np.abs(euler_deg[i][0]) > 10 or np.abs(euler_deg[i][1]) > 10:
+                tipped = True
+                tipped_time.append(time[i] - time[0])
+            elif len(tipped_time) > 0:
+                success_tips.append([tipped_time[0], tipped_time[-1], pos[i]])
+                print('Tipped at ' + str(pos[i]) + ' from ' + str(tipped_time[0]/1e9) + ' seconds to ' + str(tipped_time[-1]/1e9) + ' seconds')
+                tipped_time = []
+
+        # Find where the rover is pausing for a long time
+        pause_count = 0
+        pause_start = 0
+        moving_at_end = True
+        for i in range(len(pos)-1):
+            if np.isclose(pos[i], pos[i+1], atol=1e-2).all() and pause_count == 0:
+                pause_start = time[i]
+                pause_count += 1
+            if np.isclose(pos[i], pos[i+1], atol=1e-2).all():
+                pause_count += 1
+            else:
+                if pause_count > 5:
+                    success_pauses.append([time[i]-pause_start, pause_start, pos[i]])
+                    duration = str((time[i]-pause_start)/1e9)
+                    start_time = str(pause_start/1e9 - time[0]/1e9)
+                    end_time = str(time[i]/1e9 - time[0]/1e9)
+                    location = str(pos[i])
+                    print('Paused at ' + location + ' for ' + duration +
+                            ' seconds, starting at ' + start_time +
+                            ' seconds and ending at ' + end_time + ' seconds')
+                pause_count = 0
+
+        if pause_count > 5:
+            success_pauses.append([time[i]-pause_start, pause_start, pos[i]])
             duration = str((time[i]-pause_start)/1e9)
             start_time = str(pause_start/1e9 - time[0]/1e9)
             end_time = str(time[i]/1e9 - time[0]/1e9)
@@ -506,6 +584,7 @@ def main():
     # visualizeArcOptions(1, 'near', False)
     # visualizeArcOptions(1, 'far', False)
     # visualizeArcOptions(1, 'total', False)
+    successEval()
     failureEval()
 
     # total = 0
@@ -517,8 +596,9 @@ def main():
     # print(total/len(successIndices))
 
     # plotData('color_matching')
-    # plotData('successes')
+    plotData('successes')
     plotData('failures')
+    plot.show()
 
 if __name__ == "__main__":
     main()
