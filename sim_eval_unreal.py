@@ -327,7 +327,7 @@ def plotData(param):
             goalY = np.array(goals_sent[n])[:,1] - origin_y
             ax.scatter(goalX, goalY, c='g', zorder=1)
             # ax.scatter(goalX, goalY, c=colors[counter%num_colors], zorder=1)
-            counter += 1
+            # counter += 1
 
         for i in range(len(success_tips)):
             ax.scatter(success_tips[i][2][0], success_tips[i][2][1], c="red", marker="^")
@@ -365,7 +365,8 @@ def plotData(param):
         ax.legend(failureIndices, title='Trial Number')
 
     # Specify the axes of the plot:
-    size = 129/2
+    # size = 129/2
+    size = 600
     xmin, ymin, xmax, ymax = -size, -size, size, size
     ax.set(xlim=(xmin-1, xmax+1), ylim=(ymin-1, ymax+1), aspect='equal')
     ticks_freq = 1
