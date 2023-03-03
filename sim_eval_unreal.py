@@ -283,7 +283,7 @@ def visualizeArcOptions(trial_num, param, plot_separate):
 def plotData(param):
 
     # Initialize the figure
-    fig, ax = plot.subplots(figsize=(10,10))
+    fig, ax = plot.subplots(figsize=(6,6))
 
     # Define the origin
     origin_x = 0
@@ -319,21 +319,23 @@ def plotData(param):
             pos = np.asarray(pos, dtype=float)
             poseX = pos[:,0] - origin_x
             poseY = pos[:,1] - origin_y
-            ax.plot(poseX, poseY, 'mediumseagreen')
+            ax.plot(poseX, poseY, 'mediumseagreen', zorder=1)
             # ax.plot(poseX, poseY, colors[counter%num_colors])
 
             # Find the x and y position of the goal and plot it
             goalX = np.array(goals_sent[n])[:,0] - origin_x
             goalY = np.array(goals_sent[n])[:,1] - origin_y
-            ax.scatter(goalX, goalY, c='g', zorder=1)
+            ax.scatter(goalX, goalY, c='g', zorder=4)
             # ax.scatter(goalX, goalY, c=colors[counter%num_colors], zorder=1)
             # counter += 1
 
         for i in range(len(success_tips)):
-            ax.scatter(success_tips[i][2][0], success_tips[i][2][1], c="red", marker="^")
+            if np.sqrt(success_tips[i][2][0]**2 + success_tips[i][2][1]**2) > 5.0:
+                ax.scatter(success_tips[i][2][0], success_tips[i][2][1], c="blueviolet", marker="^", s=10, zorder=3)
     
         for i in range(len(success_pauses)):
-            ax.scatter(success_pauses[i][2][0], success_pauses[i][2][1], c="red", marker="o")
+            if np.sqrt(success_pauses[i][2][0]**2 + success_pauses[i][2][1]**2) > 5.0:
+                ax.scatter(success_pauses[i][2][0], success_pauses[i][2][1], c="red", marker=".", zorder=2)
         
         # ax.legend(successIndices, title='Trial Number')
     
@@ -347,25 +349,27 @@ def plotData(param):
             pos = np.asarray(pos, dtype=float)
             poseX = pos[:,0] - origin_x
             poseY = pos[:,1] - origin_y
-            ax.plot(poseX, poseY, colors[counter%num_colors])
+            ax.plot(poseX, poseY, colors[counter%num_colors], zorder=1)
 
             # Find the x and y position of the goal and plot it
             goalX = np.array(goals_sent[n])[:,0] - origin_x
             goalY = np.array(goals_sent[n])[:,1] - origin_y
-            ax.scatter(goalX, goalY, c=colors[counter%num_colors], marker='x', zorder=1)
+            ax.scatter(goalX, goalY, c=colors[counter%num_colors], marker='x', zorder=4)
 
             counter += 1
         
         for i in range(len(failure_tips)):
-            ax.scatter(failure_tips[i][2][0], failure_tips[i][2][1], c="red", marker="^")
-        
+            if np.sqrt(failure_tips[i][2][0]**2 + failure_tips[i][2][1]**2) > 5.0:
+                ax.scatter(failure_tips[i][2][0], failure_tips[i][2][1], c="blueviolet", marker="^", s=10, zorder=3)
+    
         for i in range(len(failure_pauses)):
-            ax.scatter(failure_pauses[i][2][0], failure_pauses[i][2][1], c="red", marker="o")
+            if np.sqrt(failure_pauses[i][2][0]**2 + failure_pauses[i][2][1]**2) > 5.0:
+                ax.scatter(failure_pauses[i][2][0], failure_pauses[i][2][1], c="red", marker=".", zorder=2)
 
         ax.legend(failureIndices, title='Trial Number')
 
     # Specify the axes of the plot:
-    # size = 129/2
+    # size = 60
     size = 600
     xmin, ymin, xmax, ymax = -size, -size, size, size
     ax.set(xlim=(xmin-1, xmax+1), ylim=(ymin-1, ymax+1), aspect='equal')
